@@ -1,6 +1,6 @@
 use std::path::Path;
 use clap::{Command, Arg};
-use cargo_metadata::Metadata;
+use cargo_metadata::{Metadata, Package, Target};
 
 fn main() {
 	let cli = Command::new("cargo-tarantula")
@@ -10,7 +10,21 @@ fn main() {
 
 	let manifest_path = matches.get_one::<String>("manifest-path").map(|s| Path::new(s));
 
-	let metadata = get_metadata(manifest_path);
+	let metadata = if let Ok(metadata) = get_metadata(manifest_path) {
+		metadata
+	} else {
+		println!("Failed to retreive metadata");
+		return;
+	};
+
+	let package = if let Some(package) = metadata.root_package() {
+		package
+	} else {
+		println!("Failed to get root package");
+		return;
+	};
+
+	let targets = get_binary_targets(&package);
 }
 
 fn get_metadata(manifest_path: Option<&Path>) -> cargo_metadata::Result<Metadata> {
@@ -21,4 +35,11 @@ fn get_metadata(manifest_path: Option<&Path>) -> cargo_metadata::Result<Metadata
 	}
 
 	cmd.exec()
+}
+
+fn get_binary_targets(package: &Package) -> Vec<Target> {
+	let mut targets = package.targets.clone();
+	targets.retain(|t| t.is_bin());
+
+	targets
 }
