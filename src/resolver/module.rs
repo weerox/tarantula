@@ -12,9 +12,6 @@ struct ModuleResolver<P: AsRef<Path>> {
 impl<P: AsRef<Path>> VisitMut for ModuleResolver<P> {
 	fn visit_item_mod_mut(&mut self, node: &mut ItemMod) {
 		if node.semi.is_some() {
-			// TODO Replace this mod by reading the file and insertings its content here in a mod with braces.
-			// Make sure that this imported file has already resolved its mods.
-
 			let path = self.base.as_ref().join(self.modules.iter().collect::<PathBuf>());
 
 			let file_path = {
@@ -70,7 +67,6 @@ impl<P: AsRef<Path>> VisitMut for ModuleResolver<P> {
 				panic!("Failed to parse file at {:?}", &file_path);
 			};
 
-			// TODO resolve mods in this new file
 			let mut new_module_path = self.modules.clone();
 			new_module_path.push(node.ident.to_string());
 			resolve_modules(&mut file, self.base.as_ref(), new_module_path);
