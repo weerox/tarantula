@@ -4,6 +4,8 @@ use syn::{File, ItemMod};
 use syn::token::Brace;
 use syn::visit_mut::VisitMut;
 
+// https://doc.rust-lang.org/reference/items/modules.html
+
 struct ModuleResolver<P: AsRef<Path>> {
 	base: P,
 	modules: Vec<String>
