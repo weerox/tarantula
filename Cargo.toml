@@ -10,3 +10,5 @@ path = "src/main.rs"
 [dependencies]
 clap = "4.1.6"
 cargo_metadata = "0.15.3"
+syn = { version = "2.0", features = ["parsing", "printing", "full", "visit-mut"] }
+quote = "1.0.29"

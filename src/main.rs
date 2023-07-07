@@ -1,6 +1,11 @@
+use std::io::Read;
+use std::fs::File;
 use std::path::Path;
 use clap::{Command, Arg};
 use cargo_metadata::{Metadata, Package, Target};
+use quote::ToTokens;
+
+mod resolver;
 
 fn main() {
 	let cli = Command::new("cargo-tarantula")
@@ -25,6 +30,36 @@ fn main() {
 	};
 
 	let targets = get_binary_targets(&package);
+
+	for target in targets {
+		let mut file = if let Ok(file) = File::open(&target.src_path) {
+			file
+		} else {
+			println!("Failed to read src file for target {}", target.name);
+			return;
+		};
+
+		let mut content = String::new();
+		let result = file.read_to_string(&mut content);
+		if result.is_err() {
+			println!("Failed to read src file for target {}", target.name);
+			return;
+		}
+
+		let mut file = if let Ok(file) = syn::parse_file(&content) {
+			file
+		} else {
+			println!("Failed to parse file at {}", &target.src_path);
+			return;
+		};
+
+		let mut base = target.src_path.clone();
+		base.pop();
+
+		resolver::module::resolve_modules(&mut file, base, Vec::new());
+
+		println!("{}", file.to_token_stream());
+	}
 }
 
 fn get_metadata(manifest_path: Option<&Path>) -> cargo_metadata::Result<Metadata> {
